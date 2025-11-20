@@ -63,7 +63,7 @@
         <span>Fixed</span>
       </div>
 
-      <!-- Cost field for FIXED expenses -->
+
       <div id="fixed-cost-container" style="display:none;">
         <label>Cost:</label>
         <input type="number" id="fixed-cost" class="input-field" placeholder="e.g. 1200">
@@ -84,7 +84,7 @@
       <button id="add-expense-btn">Submit Expense</button>
     </div>
 
-    <!-- RIGHT SIDE: EXPENSE COLUMNS -->
+
     <div class="expense-columns">
 
       <div class="column">
@@ -116,21 +116,16 @@
   </div>
 
 
-  <!-- === JAVASCRIPT === -->
+
   <script>
 
-    /* ----------------------------------
-       FIXED COST FIELD SHOW/HIDE
-    ---------------------------------- */
+
     document.getElementById("expense-fixed").addEventListener("change", function () {
       document.getElementById("fixed-cost-container").style.display =
         this.checked ? "block" : "none";
     });
 
 
-    /* ----------------------------------
-       PAY LEFT CALCULATION
-    ---------------------------------- */
     document.getElementById("submit-btn").addEventListener("click", updateAll);
 
     function updatePayLeft() {
@@ -150,9 +145,6 @@
     }
 
 
-    /* ----------------------------------
-       PIE CHART SETUP
-    ---------------------------------- */
 
     let expenseChart = null;
 
@@ -198,7 +190,7 @@
         }
       }
 
-      // destroy old chart before replacing
+
       if (expenseChart) {
         expenseChart.destroy();
       }
@@ -217,9 +209,7 @@
     }
 
 
-    /* ----------------------------------
-       ADD EXPENSE
-    ---------------------------------- */
+
     document.getElementById("add-expense-btn").addEventListener("click", () => {
       const name = document.getElementById("expense-name").value;
       const fixed = document.getElementById("expense-fixed").checked;
@@ -240,9 +230,6 @@
     });
 
 
-    /* ----------------------------------
-       CREATE CARD
-    ---------------------------------- */
     function createExpenseCard(name, fixed, fixedCost, desc, category) {
       const card = document.createElement("div");
       card.classList.add("expense-card");
@@ -279,12 +266,9 @@
     }
 
 
-    /* ----------------------------------
-       EDIT + DELETE + EVENTS
-    ---------------------------------- */
+
     function attachCardEvents(card) {
 
-      // DELETE
       card.querySelector(".delete-btn").addEventListener("click", () => {
         if (!confirm("Are you sure you want to delete this expense?")) return;
 
@@ -292,7 +276,6 @@
         updateAll();
       });
 
-      // EDIT
       card.querySelector(".edit-btn").addEventListener("click", () => {
 
         const name = card.querySelector("strong").textContent;
