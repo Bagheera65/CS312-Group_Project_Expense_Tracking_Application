@@ -10,14 +10,12 @@
 </head>
 <body>
 
-  <!-- TOP ROW: PAYCHECK + PIE CHART -->
   <div class="top-row">
 
-    <!-- PAYCHECK SECTION -->
+
     <div class="container paycheck-container">
       <h1>Welcome to <%= title %></h1>
 
-      <!-- Paycheck Input -->
       <label for="paycheck">Paycheck (monthly):</label>
       <input 
         type="number" 
@@ -26,7 +24,7 @@
         class="input-field"
       />
 
-      <!-- Pay Left Display -->
+
       <label for="payleft">Pay Left:</label>
       <input 
         type="text" 
@@ -39,7 +37,7 @@
       <button id="submit-btn">Submit</button>
     </div>
 
-    <!-- PIE CHART -->
+
     <div class="chart-container">
       <h3>Expense Breakdown</h3>
       <canvas id="expenseChart"></canvas>
@@ -47,12 +45,12 @@
 
   </div>
 
-  <!-- BUDGETING TOOL -->
+
   <h2 class="section-title">Budgeting Tool</h2>
 
   <div class="budget-layout">
 
-    <!-- CREATE NEW EXPENSE -->
+
     <div class="create-expense">
       <h3>Create New Expense</h3>
 
@@ -69,7 +67,7 @@
         <span>Fixed</span>
       </div>
 
-      <!-- Cost field for FIXED expenses -->
+
       <div id="fixed-cost-container" style="display:none;">
         <label>Cost:</label>
         <input type="number" id="fixed-cost" class="input-field" placeholder="e.g. 1200">
@@ -90,7 +88,7 @@
       <button id="add-expense-btn">Submit Expense</button>
     </div>
 
-    <!-- COLUMNS -->
+
     <div class="expense-columns">
 
       <div class="column">
@@ -121,20 +119,15 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT -->
+ 
   <script>
 
-    /* ============================================================
-       TOGGLE FIXED/VVARIABLE COST FIELD
-    ============================================================ */
     document.getElementById("expense-fixed").addEventListener("change", function () {
       document.getElementById("fixed-cost-container").style.display =
         this.checked ? "block" : "none";
     });
 
-    /* ============================================================
-       PAY LEFT CALCULATION
-    ============================================================ */
+
     function updatePayLeft() {
       const paycheck = Number(document.getElementById("paycheck").value || 0);
       let totalExpenses = 0;
@@ -159,9 +152,6 @@
 
 
 
-    /* ============================================================
-       PIE CHART
-    ============================================================ */
 
     let expenseChart = null;
 
@@ -224,7 +214,7 @@
 
 
     document.addEventListener("DOMContentLoaded", () => {
-  // Load paycheck from localStorage
+
   const savedPaycheck = localStorage.getItem("paycheck");
   if (savedPaycheck !== null) {
     document.getElementById("paycheck").value = savedPaycheck;
@@ -254,9 +244,6 @@
       updateAll();
     }
 
-    /* ============================================================
-       ADD EXPENSE TO DATABASE
-    ============================================================ */
     document.getElementById("add-expense-btn").addEventListener("click", async () => {
       const name = document.getElementById("expense-name").value;
       const fixed = document.getElementById("expense-fixed").checked;
@@ -299,9 +286,6 @@
       updateAll();
     });
 
-    /* ============================================================
-       CREATE CARD
-    ============================================================ */
     function createExpenseCard(name, fixed, fixedCost, desc, category) {
       const card = document.createElement("div");
       card.classList.add("expense-card");
@@ -337,9 +321,7 @@
       return card;
     }
 
-    /* ============================================================
-       CARD EVENTS (EDIT / DELETE)
-    ============================================================ */
+
     function attachCardEvents(card) {
 
       // DELETE CARD + DATABASE ENTRY
@@ -356,7 +338,7 @@
         updateAll();
       });
 
-      // EDIT CARD + DATABASE
+
       card.querySelector(".edit-btn").addEventListener("click", async () => {
         const name = card.querySelector("strong").textContent;
         const isFixed = card.dataset.fixed === "true";
@@ -389,9 +371,7 @@
       });
     }
 
-    /* ============================================================
-       RESET FORM
-    ============================================================ */
+
     function resetExpenseForm() {
       document.getElementById("expense-name").value = "";
       document.getElementById("expense-fixed").checked = false;
@@ -401,9 +381,7 @@
       document.getElementById("expense-desc").value = "";
     }
 
-    /* ============================================================
-       UPDATE EVERYTHING
-    ============================================================ */
+
     function updateAll() {
       updatePayLeft();
       updatePieChart();
