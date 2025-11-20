@@ -5,18 +5,15 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/CSS/style.css" />
 
-//This loads in the pie chart
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-/top-row class contains the paycheck section and the pie chart
   <div class="top-row">
 
     <div class="container paycheck-container">
       <h1>Expense Tracker</h1>
 
-      //This takes users paycheck information
       <label for="paycheck">Paycheck (monthly):</label>
       <input 
         type="number" 
@@ -25,7 +22,6 @@
         class="input-field"
       />
 
-      //This displays the amount of paycheck left over after expense
       <label for="payleft">Pay Left:</label>
       <input 
         type="text" 
@@ -38,7 +34,6 @@
       <button id="submit-btn">Submit</button>
     </div>
 
-    //pie chart
     <div class="chart-container">
       <h3>Expense Breakdown</h3>
       <canvas id="expenseChart"></canvas>
