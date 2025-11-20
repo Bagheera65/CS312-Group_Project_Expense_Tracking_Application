@@ -1,0 +1,244 @@
+/* Main container box */
+.container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: #f4f4f4;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+/* Headings */
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* Input fields */
+.input-field {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+/* Button styling */
+#submit-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background: #007bff;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#submit-btn:hover {
+  background: #0056b3;
+}
+
+/* === Section Title === */
+.section-title {
+  text-align: center;
+  margin: 40px 0 20px;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+/* === Budget Layout === */
+.budget-layout {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* Left: Create Expense Panel */
+.create-expense {
+  width: 30%;
+  padding: 20px;
+  background: #eef0f3;
+  border-radius: 10px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.create-expense h3 {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Switch control */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+.switch {
+  position: relative;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Right: Columns */
+.expense-columns {
+  width: 70%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.column {
+  flex: 1;
+  background: #f7f7f7;
+  padding: 10px;
+  border-radius: 8px;
+  height: 500px;
+  overflow-y: auto;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.column h4 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Expense cards */
+.expense-card {
+  background: #ffffff;
+  border-left: 5px solid #007bff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+
+.expense-card .desc {
+  font-size: 0.9rem;
+  color: #555;
+}
+/* Fixed cost field spacing */
+#fixed-cost-container {
+  margin-top: 10px;
+}
+
+/* Make cost input inside cards small and clean */
+.variable-expense-cost {
+  width: 80px;
+  padding: 4px;
+  font-size: 0.9rem;
+}
+
+/* Keep fixed cost text aligned */
+.fixed-expense-cost {
+  font-weight: bold;
+}
+
+/* Buttons on expense cards */
+.card-buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-buttons button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: black;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #e0a800;
+}
+
+.delete-btn:hover {
+  background-color: #b52a36;
+}
+
+/* ---------- TOP ROW ALIGNMENT ---------- */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.paycheck-container {
+  width: 30%;
+}
+
+/* ---------- PIE CHART ---------- */
+.chart-container {
+  width: 40%;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.15);
+}
+
+.chart-container h3 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+

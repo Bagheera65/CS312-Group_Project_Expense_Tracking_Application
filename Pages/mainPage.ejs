@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/CSS/style.css" />
+
+//This loads in the pie chart
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+/top-row class contains the paycheck section and the pie chart
+  <div class="top-row">
+
+    <div class="container paycheck-container">
+      <h1>Expense Tracker</h1>
+
+      //This takes users paycheck information
+      <label for="paycheck">Paycheck (monthly):</label>
+      <input 
+        type="number" 
+        id="paycheck" 
+        placeholder="enter paycheck here"
+        class="input-field"
+      />
+
+      //This displays the amount of paycheck left over after expense
+      <label for="payleft">Pay Left:</label>
+      <input 
+        type="text" 
+        id="payleft" 
+        readonly 
+        placeholder="—"
+        class="input-field"
+      />
+
+      <button id="submit-btn">Submit</button>
+    </div>
+
+    //pie chart
+    <div class="chart-container">
+      <h3>Expense Breakdown</h3>
+      <canvas id="expenseChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- === Budgeting Section === -->
+  <h2 class="section-title">Budgeting Tool</h2>
+
+  <div class="budget-layout">
+
+    <!-- LEFT SIDE: CREATE NEW EXPENSE -->
+    <div class="create-expense">
+      <h3>Create New Expense</h3>
+
+      <label>Expense Name:</label>
+      <input type="text" id="expense-name" class="input-field" placeholder="e.g. Rent">
+
+      <label>Fixed or Variable?</label>
+      <div class="switch-row">
+        <span>Variable</span>
+        <label class="switch">
+          <input type="checkbox" id="expense-fixed">
+          <span class="slider"></span>
+        </label>
+        <span>Fixed</span>
+      </div>
+
+      <!-- Cost field for FIXED expenses -->
+      <div id="fixed-cost-container" style="display:none;">
+        <label>Cost:</label>
+        <input type="number" id="fixed-cost" class="input-field" placeholder="e.g. 1200">
+      </div>
+
+      <label>Category:</label>
+      <select id="expense-category" class="input-field">
+        <option value="living">Living Expense</option>
+        <option value="transportation">Transportation</option>
+        <option value="entertainment">Entertainment</option>
+        <option value="savings">Savings</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label>Description (optional):</label>
+      <textarea id="expense-desc" class="input-field" placeholder="Optional description..."></textarea>
+
+      <button id="add-expense-btn">Submit Expense</button>
+    </div>
+
+    <!-- RIGHT SIDE: EXPENSE COLUMNS -->
+    <div class="expense-columns">
+
+      <div class="column">
+        <h4>Living Expense</h4>
+        <div id="col-living" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Transportation</h4>
+        <div id="col-transportation" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Entertainment</h4>
+        <div id="col-entertainment" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Savings</h4>
+        <div id="col-savings" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Other</h4>
+        <div id="col-other" class="expense-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- === JAVASCRIPT === -->
+  <script>
+
+    /* ----------------------------------
+       FIXED COST FIELD SHOW/HIDE
+    ---------------------------------- */
+    document.getElementById("expense-fixed").addEventListener("change", function () {
+      document.getElementById("fixed-cost-container").style.display =
+        this.checked ? "block" : "none";
+    });
+
+
+    /* ----------------------------------
+       PAY LEFT CALCULATION
+    ---------------------------------- */
+    document.getElementById("submit-btn").addEventListener("click", updateAll);
+
+    function updatePayLeft() {
+      const paycheck = Number(document.getElementById("paycheck").value || 0);
+      let totalExpenses = 0;
+
+      document.querySelectorAll(".fixed-expense-cost").forEach(el => {
+        totalExpenses += Number(el.textContent.replace("$", ""));
+      });
+
+      document.querySelectorAll(".variable-expense-cost").forEach(input => {
+        totalExpenses += Number(input.value || 0);
+      });
+
+      const payLeft = paycheck - totalExpenses;
+      document.getElementById("payleft").value = "$" + payLeft.toFixed(2);
+    }
+
+
+    /* ----------------------------------
+       PIE CHART SETUP
+    ---------------------------------- */
+
+    let expenseChart = null;
+
+    function calculateCategoryTotals() {
+      const categories = {
+        living: 0,
+        transportation: 0,
+        entertainment: 0,
+        savings: 0,
+        other: 0
+      };
+
+      document.querySelectorAll(".expense-card").forEach(card => {
+        let category = card.dataset.category;
+        let isFixed = card.dataset.fixed === "true";
+
+        if (isFixed) {
+          let value = Number(
+            card.querySelector(".fixed-expense-cost").textContent.replace("$", "")
+          );
+          categories[category] += value;
+        } else {
+          let input = card.querySelector(".variable-expense-cost");
+          categories[category] += Number(input.value || 0);
+        }
+      });
+
+      return categories;
+    }
+
+    function updatePieChart() {
+      const totals = calculateCategoryTotals();
+
+      const labels = [];
+      const data = [];
+
+      for (let [cat, amount] of Object.entries(totals)) {
+        if (amount > 0) {
+          labels.push(
+            cat.charAt(0).toUpperCase() + cat.slice(1)
+          );
+          data.push(amount);
+        }
+      }
+
+      // destroy old chart before replacing
+      if (expenseChart) {
+        expenseChart.destroy();
+      }
+
+      const ctx = document.getElementById("expenseChart").getContext("2d");
+
+      expenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data
+          }]
+        }
+      });
+    }
+
+
+    /* ----------------------------------
+       ADD EXPENSE
+    ---------------------------------- */
+    document.getElementById("add-expense-btn").addEventListener("click", () => {
+      const name = document.getElementById("expense-name").value;
+      const fixed = document.getElementById("expense-fixed").checked;
+      const category = document.getElementById("expense-category").value;
+      const desc = document.getElementById("expense-desc").value;
+      const fixedCost = Number(document.getElementById("fixed-cost").value || 0);
+
+      if (!name) {
+        alert("Please enter an expense name.");
+        return;
+      }
+
+      const card = createExpenseCard(name, fixed, fixedCost, desc, category);
+      document.getElementById("col-" + category).appendChild(card);
+
+      resetExpenseForm();
+      updateAll();
+    });
+
+
+    /* ----------------------------------
+       CREATE CARD
+    ---------------------------------- */
+    function createExpenseCard(name, fixed, fixedCost, desc, category) {
+      const card = document.createElement("div");
+      card.classList.add("expense-card");
+      card.dataset.category = category;
+      card.dataset.fixed = fixed;
+
+      let html = `<strong>${name}</strong>`;
+
+      if (fixed) {
+        html += `<p>Cost: <span class="fixed-expense-cost">$${fixedCost}</span></p>`;
+      } else {
+        html += `<p>Cost: <input type="number" class="variable-expense-cost" placeholder="0"></p>`;
+      }
+
+      if (desc) {
+        html += `<p class="desc">${desc}</p>`;
+      }
+
+      html += `
+        <div class="card-buttons">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      `;
+
+      card.innerHTML = html;
+      attachCardEvents(card);
+
+      if (!fixed) {
+        card.querySelector(".variable-expense-cost").addEventListener("input", updateAll);
+      }
+
+      return card;
+    }
+
+
+    /* ----------------------------------
+       EDIT + DELETE + EVENTS
+    ---------------------------------- */
+    function attachCardEvents(card) {
+
+      // DELETE
+      card.querySelector(".delete-btn").addEventListener("click", () => {
+        if (!confirm("Are you sure you want to delete this expense?")) return;
+
+        card.remove();
+        updateAll();
+      });
+
+      // EDIT
+      card.querySelector(".edit-btn").addEventListener("click", () => {
+
+        const name = card.querySelector("strong").textContent;
+        const isFixed = card.dataset.fixed === "true";
+        const category = card.dataset.category;
+        const desc = card.querySelector(".desc")?.textContent || "";
+
+        document.getElementById("expense-name").value = name;
+        document.getElementById("expense-fixed").checked = isFixed;
+        document.getElementById("expense-category").value = category;
+        document.getElementById("expense-desc").value = desc;
+
+        if (isFixed) {
+          const cost = card.querySelector(".fixed-expense-cost").textContent.replace("$", "");
+          document.getElementById("fixed-cost-container").style.display = "block";
+          document.getElementById("fixed-cost").value = cost;
+        } else {
+          document.getElementById("fixed-cost-container").style.display = "none";
+          document.getElementById("fixed-cost").value = "";
+        }
+
+        card.remove();
+        updateAll();
+      });
+    }
+
+
+    /* ----------------------------------
+       RESET EXPENSE FORM
+    ---------------------------------- */
+    function resetExpenseForm() {
+      document.getElementById("expense-name").value = "";
+      document.getElementById("expense-fixed").checked = false;
+      document.getElementById("fixed-cost").value = "";
+      document.getElementById("fixed-cost-container").style.display = "none";
+      document.getElementById("expense-category").value = "living";
+      document.getElementById("expense-desc").value = "";
+    }
+
+
+    /* ----------------------------------
+       UPDATE EVERYTHING (called often)
+    ---------------------------------- */
+    function updateAll() {
+      updatePayLeft();
+      updatePieChart();
+    }
+
+  </script>
+
+</body>
+</html>
+
