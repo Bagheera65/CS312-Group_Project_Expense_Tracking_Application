@@ -1,5 +1,4 @@
 
-
 import express from 'express';
 import session from 'express-session';
 import path from 'path';
@@ -48,6 +47,12 @@ app.set('views', path.join(__dirname, 'Pages'));
 app.get('/', (req, res) => {
   res.render('mainPage', { title: 'MainPage' });
 });
+
+
+app.get('/monthMenu', (req, res) => {
+  res.render('monthMenu', { title: 'MonthMenu' });
+});
+
 
 
 app.get('/api/expenses', async (req, res) => {
@@ -109,6 +114,124 @@ app.put('/api/expenses/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to edit expense' });
   }
 });
+
+
+app.get('/api/months', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, month_name
+       FROM monthly_statements
+       ORDER BY created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching months:", err);
+    res.status(500).json({ error: "Failed to load months" });
+  }
+});
+
+app.get('/api/months/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await pool.query(
+      `SELECT month_name, expenses, paycheck
+       FROM monthly_statements
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Month not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("Error loading month:", err);
+    res.status(500).json({ error: "Failed to load month" });
+  }
+});
+
+
+app.delete('/api/months/:id', async (req, res) => {
+  try {
+    await pool.query(
+      `DELETE FROM monthly_statements WHERE id = $1`,
+      [req.params.id]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Error deleting month:", err);
+    res.status(500).json({ error: "Failed to delete month" });
+  }
+});
+
+app.delete('/api/reset-expenses', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM expenses');
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error resetting expenses:", err);
+    res.status(500).json({ error: "Failed to reset expenses" });
+  }
+});
+
+
+app.put("/api/months/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { name, expenses, paycheck } = req.body;
+
+    await pool.query(
+      `UPDATE monthly_statements
+       SET month_name = $1,
+           expenses = $2,
+           paycheck = $3
+       WHERE id = $4`,
+      [name, JSON.stringify(expenses), paycheck, id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error updating month:", err);
+    res.status(500).json({ error: "Failed to update month" });
+  }
+});
+
+
+
+app.post("/api/months", async (req, res) => {
+  try {
+    const { name, expenses, paycheck } = req.body;
+
+    await pool.query(
+      `INSERT INTO monthly_statements (month_name, expenses, paycheck, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [name, JSON.stringify(expenses), paycheck]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error creating month:", err);
+    res.status(500).json({ error: "Failed to create month" });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.render('mainPage', { title: 'MainPage' });
+});
+
+app.get('/monthMenu', (req, res) => {
+  res.render('monthMenu', { title: 'MonthMenu' });
+});
+
+app.get('/monthStats', (req, res) => {
+  res.render('monthStats', { title: 'Month Stats' });
+});
+
 
 
 app.use((req, res) => {

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/CSS/style.css" />
+</head>
+
+<body>
+
+  <div class="month-menu-container">
+
+    <!-- LEFT SECTION -->
+    <div class="month-left">
+      <h2>Add New Month</h2>
+
+<label for="monthName">Name:</label>
+<input 
+  type="text"
+  id="monthName"
+  class="input-field"
+  placeholder="Enter Name of Month"
+/>
+
+<button id="submit-month-name" class="big-blue-btn">Submit</button>
+<button id="create-new-month-btn" class="big-blue-btn">Create New Month</button>
+
+    </div>
+
+    <div class="month-divider"></div>
+
+    <!-- RIGHT SECTION -->
+    <div class="month-right">
+      <h2>List of Monthly Statements</h2>
+
+      <ul class="month-list" id="month-list"></ul>
+
+    </div>
+
+  </div>
+<script>
+
+
+  function getNextMonthName(currentName) {
+  const match = currentName.match(/^(.*?)(?:\((\d+)\))?$/);
+  const base = (match[1] || "").trim();
+  const previousNum = match[2] ? parseInt(match[2], 10) : 1;
+  const newNum = previousNum + 1;
+  return `${base}(${newNum})`;
+}
+
+async function autoSaveEditedMonth() {
+  const editId = localStorage.getItem("pendingMonthEditId");
+  if (!editId) return; // Not editing → do nothing
+
+  const expensesJson = localStorage.getItem("pendingMonthExpenses");
+  const paycheck = localStorage.getItem("pendingMonthPaycheck");
+
+  if (!expensesJson || !paycheck) {
+    console.warn("No pending data found for auto-save.");
+    return;
+  }
+
+  const expenses = JSON.parse(expensesJson);
+
+  // Fetch the original month to get its name
+  const res = await fetch(`/api/months/${editId}`);
+  if (!res.ok) {
+    alert("Failed to load month for auto-save.");
+    return;
+  }
+  
+  const current = await res.json();
+  const oldName = current.month_name;
+
+  // Auto-generate incremented name
+  const newName = getNextMonthName(oldName);
+
+  // Write new name into input (optional UI)
+  document.getElementById("monthName").value = newName;
+
+  // Save updated month
+  const saveRes = await fetch(`/api/months/${editId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: newName,
+      expenses,
+      paycheck
+    })
+  });
+
+  if (!saveRes.ok) {
+    alert("Auto-save failed.");
+    return;
+  }
+
+  console.log("Auto-save successful!");
+
+  // Clear edit mode so future loads don’t auto-save again
+  localStorage.removeItem("pendingMonthEditId");
+  localStorage.removeItem("pendingMonthExpenses");
+  localStorage.removeItem("pendingMonthPaycheck");
+
+  // Refresh month list so user sees updated name immediately
+  window.location.reload();
+}
+
+
+document.getElementById("submit-month-name").addEventListener("click", async () => {
+  const monthNameInput = document.getElementById("monthName");
+
+  // Expenses / paycheck from main page
+  const expensesJson = localStorage.getItem("pendingMonthExpenses");
+  const paycheck = localStorage.getItem("pendingMonthPaycheck");
+
+  if (!expensesJson) {
+    alert("No pending month data found. Please go back and click 'Save Data As Monthly Statement' again.");
+    return;
+  }
+
+  const expenses = JSON.parse(expensesJson);
+  const editId = localStorage.getItem("pendingMonthEditId");
+
+  let response;
+  let nameToSave;
+
+  if (editId) {
+    // EDITING an existing month: auto-generate the new name
+    const currentRes = await fetch(`/api/months/${editId}`);
+    if (!currentRes.ok) {
+      alert("Failed to load existing month info for rename.");
+      return;
+    }
+
+    const currentMonth = await currentRes.json(); // has month_name, expenses, paycheck
+    const originalName = currentMonth.month_name;
+
+    nameToSave = getNextMonthName(originalName); // e.g. "May" -> "May(2)", "May(2)" -> "May(3)"
+
+    // Optional: reflect the computed name in the input so user can see it
+    monthNameInput.value = nameToSave;
+
+    response = await fetch(`/api/months/${editId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nameToSave,
+        expenses,
+        paycheck
+      })
+    });
+
+    localStorage.removeItem("pendingMonthEditId");
+
+  } else {
+    // CREATING a brand new month: use the user-typed name
+    const typedName = monthNameInput.value.trim();
+
+    if (!typedName) {
+      alert("Please enter a name for the month.");
+      return;
+    }
+
+    nameToSave = typedName;
+
+    response = await fetch("/api/months", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nameToSave,
+        expenses,
+        paycheck
+      })
+    });
+  }
+
+  // Clean up pending month data either way
+  localStorage.removeItem("pendingMonthExpenses");
+  localStorage.removeItem("pendingMonthPaycheck");
+
+  if (response.ok) {
+    alert("Month saved!");
+    window.location.reload();
+  } else {
+    alert("Failed to save month.");
+  }
+});
+
+document.getElementById("create-new-month-btn").addEventListener("click", async () => {
+
+  await fetch('/api/reset-expenses', { method: 'DELETE' });
+
+  localStorage.removeItem("pendingMonthEditId");
+  localStorage.removeItem("loadedMonthId");
+
+  window.location.href = "/";
+});
+
+
+async function loadMonths() {
+  const list = document.getElementById("month-list");
+  list.innerHTML = "";
+
+  const response = await fetch('/api/months');
+  const months = await response.json();
+
+  if (months.length === 0) {
+    list.innerHTML = "<li>Nothing To See Here. No Months Added</li>";
+    return;
+  }
+
+  months.forEach(month => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <div class="month-item">
+        <a href="#" data-id="${month.id}" class="month-link">${month.month_name}</a>
+
+        <button class="edit-month-btn" data-id="${month.id}" data-name="${month.month_name}">Edit</button>
+        <button class="delete-month-btn" data-id="${month.id}">Delete</button>
+      </div>
+    `;
+
+    list.appendChild(li);
+  });
+
+  attachMonthClickEvents();
+  attachEditEvents();
+  attachDeleteEvents();
+}
+
+// CLICK HANDLER (LOAD MONTH INTO MAIN PAGE)
+function attachMonthClickEvents() {
+  document.querySelectorAll(".month-link").forEach(link => {
+    link.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = link.dataset.id;
+
+      // Fetch the saved expenses for this month
+      const response = await fetch(`/api/months/${id}`);
+      const monthData = await response.json();
+
+      // Remember which month we loaded
+      localStorage.setItem("loadedMonthId", id);
+
+      localStorage.setItem("loadedMonthExpenses", JSON.stringify(monthData.expenses));
+      localStorage.setItem("loadedMonthPaycheck", monthData.paycheck);
+
+      window.location.href = "/";
+    });
+  });
+}
+
+
+loadMonths();
+
+// DELETE MONTH
+function attachDeleteEvents() {
+  document.querySelectorAll(".delete-month-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+
+      if (!confirm("Are you sure you want to delete this month permanently?")) return;
+
+      await fetch(`/api/months/${id}`, {
+        method: "DELETE"
+      });
+
+      loadMonths(); // refresh list
+    });
+  });
+}
+
+function attachEditEvents() {
+  document.querySelectorAll(".edit-month-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+
+      // Fill into left-side input
+      document.getElementById("monthName").value = name;
+
+      // Store the ID of the month being edited
+      localStorage.setItem("editingMonthId", id);
+    });
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  autoSaveEditedMonth();
+});
+
+
+</script>
+
+</body>
+</html>

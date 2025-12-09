@@ -242,3 +242,102 @@ input:checked + .slider:before {
   margin-bottom: 10px;
 }
 
+/* ===== MONTH MENU LAYOUT ===== */
+.month-menu-container {
+  display: flex;
+  height: 90vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* LEFT COLUMN (1/3 width) */
+.month-left {
+  width: 33%;
+  padding: 20px;
+}
+
+.month-left h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* RIGHT COLUMN (2/3 width) */
+.month-right {
+  width: 67%;
+  padding: 20px;
+}
+
+.month-right h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* DIVIDER */
+.month-divider {
+  width: 2px;
+  background-color: black;
+  margin: 0 20px;
+}
+
+/* LIST STYLING */
+.month-list {
+  padding-left: 40px;
+  font-size: 1.1rem;
+}
+
+.big-blue-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background: #007bff;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.big-blue-btn:hover {
+  background: #0056b3;
+}
+
+.month-item {
+  margin-bottom: 20px;
+}
+
+.month-item a {
+  font-size: 1.2rem;
+  margin-right: 10px;
+}
+
+.edit-month-btn,
+.delete-month-btn {
+  margin-left: 10px;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* match main page EDIT styling */
+.edit-month-btn {
+  background-color: #ffc107;
+  color: black;
+}
+
+/* match main page DELETE styling */
+.delete-month-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.edit-month-btn:hover {
+  background-color: #e0a800;
+}
+
+.delete-month-btn:hover {
+  background-color: #b02a37;
+}
+
+

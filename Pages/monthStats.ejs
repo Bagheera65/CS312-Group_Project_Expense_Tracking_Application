@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/CSS/style.css" />
+
+  <!-- Chart.js for the bar chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <h1 class="section-title">Monthly Breakdown</h1>
+
+  <div class="budget-layout">
+    <!-- LEFT: Controls + Bar Chart (re-using create-expense styling) -->
+    <div class="create-expense">
+      <h3>Month Stats</h3>
+
+      <label for="days-select">How many days in this Month?</label>
+      <select id="days-select" class="input-field">
+        <option value="28">28 days</option>
+        <option value="30">30 days</option>
+        <option value="31" selected>31 days</option>
+      </select>
+
+      <label for="average-daily">Average Daily Expense:</label>
+      <input 
+        type="text"
+        id="average-daily"
+        class="input-field"
+        readonly
+        placeholder="$0.00"
+      />
+
+      <div class="chart-container" style="margin-top: 20px;">
+        <h3>Expenses by Category</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+
+      <button 
+        type="button"
+        class="big-blue-btn"
+        style="margin-top: 20px;"
+        onclick="window.location.href='/'">
+        Back to Main Page
+      </button>
+    </div>
+
+    <!-- RIGHT: 5 read-only columns for this month’s expenses -->
+    <div class="expense-columns">
+      <div class="column">
+        <h4>Living Expense</h4>
+        <div id="col-living" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Transportation</h4>
+        <div id="col-transportation" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Entertainment</h4>
+        <div id="col-entertainment" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Savings</h4>
+        <div id="col-savings" class="expense-list"></div>
+      </div>
+
+      <div class="column">
+        <h4>Other</h4>
+        <div id="col-other" class="expense-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let barChart = null;
+    let totalExpensesForMonth = 0;
+
+    function createReadOnlyCard(expense) {
+      const card = document.createElement("div");
+      card.classList.add("expense-card");
+
+      const cost = Number(expense.cost || 0);
+
+      let html = `<strong>${expense.name}</strong>`;
+      html += `<p>Cost: $${cost.toFixed(2)}</p>`;
+
+      if (expense.description) {
+        html += `<p class="desc">${expense.description}</p>`;
+      }
+
+      card.innerHTML = html;
+      return card;
+    }
+
+    function drawBarChart(categoryTotals) {
+      const labels = [
+        "Living",
+        "Transportation",
+        "Entertainment",
+        "Savings",
+        "Other"
+      ];
+
+      const data = [
+        categoryTotals.living,
+        categoryTotals.transportation,
+        categoryTotals.entertainment,
+        categoryTotals.savings,
+        categoryTotals.other
+      ];
+
+      if (barChart) {
+        barChart.destroy();
+      }
+
+      const ctx = document.getElementById("barChart").getContext("2d");
+
+      barChart = new Chart(ctx, {
+        type: "bar",
+        indexAxis: "y",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data
+          }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+            legend: { display: false },
+        },
+        scales: {
+        x: { beginAtZero: true },
+        y: { ticks: { font: { size: 14 } } }
+    }
+    }
+
+      });
+    }
+
+    function updateAverageDaily() {
+      const daysSelect = document.getElementById("days-select");
+      const avgField = document.getElementById("average-daily");
+
+      const days = Number(daysSelect.value || 0);
+
+      if (!days || days <= 0) {
+        avgField.value = "--";
+        return;
+      }
+
+      const avg = totalExpensesForMonth / days;
+      avgField.value = "$" + avg.toFixed(2);
+    }
+
+    async function loadStats() {
+      try {
+        const response = await fetch("/api/expenses");
+        const expenses = await response.json();
+
+        const categoryTotals = {
+          living: 0,
+          transportation: 0,
+          entertainment: 0,
+          savings: 0,
+          other: 0
+        };
+
+        const columnIds = {
+          living: "col-living",
+          transportation: "col-transportation",
+          entertainment: "col-entertainment",
+          savings: "col-savings",
+          other: "col-other"
+        };
+
+        totalExpensesForMonth = 0;
+
+        expenses.forEach(exp => {
+          const category = exp.category;
+          const cost = Number(exp.cost || 0);
+
+          if (categoryTotals.hasOwnProperty(category)) {
+            categoryTotals[category] += cost;
+          }
+
+          totalExpensesForMonth += cost;
+
+          if (columnIds[category]) {
+            const col = document.getElementById(columnIds[category]);
+            const card = createReadOnlyCard(exp);
+            col.appendChild(card);
+          }
+        });
+
+        drawBarChart(categoryTotals);
+        updateAverageDaily();
+
+      } catch (err) {
+        console.error("Error loading stats:", err);
+        alert("Failed to load month stats.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document
+        .getElementById("days-select")
+        .addEventListener("change", updateAverageDaily);
+
+      loadStats();
+    });
+  </script>
+</body>
+</html>

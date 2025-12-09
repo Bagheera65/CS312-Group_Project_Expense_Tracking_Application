@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <title><%= title %></title>
   <link rel="stylesheet" href="/CSS/style.css" />
-  <!-- Load Chart.js -->
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -14,7 +14,7 @@
 
 
     <div class="container paycheck-container">
-      <h1>Welcome to <%= title %></h1>
+      <h1>Welcome to Finn and Jakob's Expense Tracker</h1>
 
       <label for="paycheck">Paycheck (monthly):</label>
       <input 
@@ -35,6 +35,8 @@
       />
 
       <button id="submit-btn">Submit</button>
+      <button id="save-month-btn" class="big-blue-btn">Save Data As Monthly Statement</button>
+      <button id="view-stats-btn" class="big-blue-btn">View Current Monthly Breakdown</button>
     </div>
 
 
@@ -144,12 +146,29 @@
       document.getElementById("payleft").value = "$" + payLeft.toFixed(2);
     }
 
-    document.getElementById("submit-btn").addEventListener("click", () => {
-  const paycheck = document.getElementById("paycheck").value;
-  localStorage.setItem("paycheck", paycheck);
-  updateAll();
-});
+document.getElementById("save-month-btn").addEventListener("click", async () => {
 
+  // 1. Fetch all current expenses from database
+  const response = await fetch('/api/expenses');
+  const expenses = await response.json();
+
+  // 2. Save pending expenses + paycheck
+  localStorage.setItem("pendingMonthExpenses", JSON.stringify(expenses));
+
+  const paycheck = document.getElementById("paycheck").value;
+  localStorage.setItem("pendingMonthPaycheck", paycheck);
+
+  // 3. If editing an existing loaded month, preserve its ID
+  const loadedMonthId = localStorage.getItem("loadedMonthId");
+  if (loadedMonthId) {
+    localStorage.setItem("pendingMonthEditId", loadedMonthId);
+  } else {
+    localStorage.removeItem("pendingMonthEditId");
+  }
+
+  // 4. Just go to Month Menu (no backend call here)
+  window.location.href = "/monthMenu";
+});
 
 
 
@@ -212,9 +231,46 @@
       });
     }
 
+    document.getElementById("view-stats-btn").addEventListener("click", () => {
+  // Just go to the stats page and let it read the current month’s expenses
+  window.location.href = "/monthStats";
+  });
 
-    document.addEventListener("DOMContentLoaded", () => {
 
+
+    document.addEventListener("DOMContentLoaded", async () => {
+
+  const savedExpenses = localStorage.getItem("loadedMonthExpenses");
+  const savedMonthPaycheck = localStorage.getItem("loadedMonthPaycheck");
+
+
+      if (savedExpenses) {
+    const expenses = JSON.parse(savedExpenses);
+
+    expenses.forEach(exp => {
+      const card = createExpenseCard(
+        exp.name,
+        exp.is_fixed,
+        exp.cost,
+        exp.description,
+        exp.category
+      );
+      card.dataset.id = exp.id || 0;
+      document.getElementById("col-" + exp.category).appendChild(card);
+    });
+
+    // Restore paycheck stored in the month
+    if (savedMonthPaycheck !== null) {
+      document.getElementById("paycheck").value = savedMonthPaycheck;
+      localStorage.removeItem("loadedMonthPaycheck");
+    }
+
+    localStorage.removeItem("loadedMonthExpenses");
+    updateAll();
+    return;
+}
+
+  // Otherwise load normally from DB
   const savedPaycheck = localStorage.getItem("paycheck");
   if (savedPaycheck !== null) {
     document.getElementById("paycheck").value = savedPaycheck;
@@ -263,7 +319,7 @@
           name,
           category,
           is_fixed: fixed,
-          cost: fixed ? fixedCost : null,
+          cost: fixed ? fixedCost : 0,
           description: desc
         })
       });
@@ -297,7 +353,7 @@
       if (fixed) {
         html += `<p>Cost: <span class="fixed-expense-cost">$${fixedCost}</span></p>`;
       } else {
-        html += `<p>Cost: <input type="number" class="variable-expense-cost" placeholder="0"></p>`;
+        html += `<p>Cost: <input type="number" class="variable-expense-cost" value="${fixedCost}" /></p>`;
       }
 
       if (desc) {
@@ -315,8 +371,28 @@
       attachCardEvents(card);
 
       if (!fixed) {
-        card.querySelector(".variable-expense-cost").addEventListener("input", updateAll);
-      }
+  const input = card.querySelector(".variable-expense-cost");
+
+  input.addEventListener("input", async () => {
+    updateAll();
+
+    const newCost = Number(input.value || 0);
+    const id = card.dataset.id;
+
+    await fetch(`/api/expenses/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        category,
+        is_fixed: false,
+        cost: newCost,
+        description: desc
+      })
+    });
+  });
+}
+
 
       return card;
     }
@@ -386,6 +462,24 @@
       updatePayLeft();
       updatePieChart();
     }
+
+    document.getElementById("submit-btn").addEventListener("click", () => {
+  const paycheck = document.getElementById("paycheck").value;
+
+  if (!paycheck) {
+    alert("Please enter a paycheck amount.");
+    return;
+  }
+
+  // Save paycheck so it persists across sessions
+  localStorage.setItem("paycheck", paycheck);
+
+  updateAll();
+
+  alert("Paycheck saved!");
+});
+
+
 
   </script>
 
